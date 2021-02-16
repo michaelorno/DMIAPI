@@ -5,7 +5,7 @@ Navn:
 	dmiapi - DMI API Overvågningsprobe
         2020-2021 Michael Ørnø
 
-Sourcecode: https://github.com/michaelorno/DMIOV.git
+Sourcecode: https://github.com/michaelorno/DMIAPI.git
 
 Synopsis
 	./dmiapi [konfigfil]
