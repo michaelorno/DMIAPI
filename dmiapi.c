@@ -1,6 +1,7 @@
-//	dmiapi.c 	20122020/MOE
+//	dmiapi.c 	20122020/Michael Ørnø
 //	Build: cc dmiapi.c -o dmiapi
-//      https://github.com/michaelorno/DMIOV.git
+// Source: https://github.com/michaelorno/DMIOV.git
+// License: GNU General Public License v3.0
 //
 //	Call: ./dmiapi <configurationfile>
 //	
