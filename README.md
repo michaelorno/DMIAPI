@@ -1,6 +1,6 @@
 # DMIAPI
 dmiapi dokumentation
-Version 0.97 11.02.2021
+Version 1.00 22.10.2021
 
 Navn:
 	dmiapi - DMI API Overvågningsprobe
@@ -12,18 +12,17 @@ Synopsis
 	./dmiapi [konfigfil]
 	
 Beskrivelse:
-	dmiapi måler svartider mod DMI's åbne data på tre API'er (metObs, ocean_Obs, lightObs).
+	dmiapi måler aktuelt svartider mod DMI's åbne data på fire API'er (metObs, oceanObs, lightObs & climateObs).
 	Svartiden måles ved at sende en 'GET' forspørgsel til API'ets gateway og læse det svar,
 	der returneres. Den tid der løber mellem afsendelse og modtagelse måles som transaktionens
 	svartid. Denne svartid kan betegnes som den brugeroplevede svartid mod DMI's API'er. 
 	Den svartid er summen af svartiden på API'et og netværkstiden fra og til klienten.
 
-	Programmet viser en målekonsol på tty, sizet til 80*24. Her vises resultaterne af den seneste måling.
+	Programmet viser en målekonsol på tty, sizet til 132*24. Her vises resultaterne af den seneste måling.
 
-        Programmet danner en html-side med konsoloutput, der kan bruges til visning af konsolen
-        fra en anden maskine.
+        Programmet danner en html-side med konsoloutput, der kan bruges til visning af konsolen på en browser.
 
-        Programmet opsamler statistik på svartider på de tre API’er og gemmer i en log-fil pr døgn.
+        Programmet opsamler statistik på svartider på de fire API’er og gemmer i en log-fil pr døgn.
 
         Programmet skriver alarmer i operativsystemets syslog pr 10. måling baseret på de svartidsgrænseværdier 
         der vælges. Disse alarmer kan hentes fra operativsystemets syslog af standard værktøjer til brug for 
@@ -94,18 +93,25 @@ Funktion:
         Seneste observation vises på monitoren.
 
 Parameteropsætning:
-	[IPHOST] ip-adresse på gateway
-	[FREQ] antal sekunder der er imellem hvert sæt af requests
-	[WWW-PATH] absolut sti til www-server, der viser konsolbillede
-	[METOBSKEY] api-key
-	[OCEANOBSKEY] api-key
-	[LIGHTOBSKEY] api-key
-	[TREASHOLD_WARNING] antal ms, der udløser en "warning" i syslog
-	[TREASHOLD_ERROR] antal ms udløser en "error" i syslog
-        [SILENT] 0|1 (0=silent dvs kun http-output, 1=output på tty)
-        [BBOX] X1,Y1,X2,Y2 (4 GPS koordinater = det geografiske kvardrat der måles indenfor)
-
-        Bemærk: Der skal være et blanktegn mellem parameternavn og værdi.
+	        [USERID] identifier (string without whitespaces)
+                [IPHOST] symbolsk adresse på gateway (https://dmigw.govcloud.dk)
+                [FREQ] wait n seconds between issue of request-triplet (int)
+                [WWW-PATH] path for index.html-file (string) 
+		[METOBSKEY] api-key (string) - obtain key at dmi.dk
+                [OCEANOBSKEY] api-key (string) - obtain key at dmi.dk
+                [LIGHTOBSKEY] api-key (string) - obtain key at dmi.dk
+                [CLIMATEKEY] api-key (string) - obtain key at dmi.dk
+                [METOBSAPI_THRESHOLD_WARNING] threshold for issue of warning i syslog in ms (int)
+                [METOBSAPI_THRESHOLD_ERROR] threshold for issue of error in syslog in  ms  (int)
+                [OCEANOBSAPI_THRESHOLD_WARNING] threshold for issue of warning i syslog in ms (int)
+                [OCEANOBSAPI_THRESHOLD_ERROR] threshold for issue of error in syslog in  ms  (int)
+                [LIGHTOBSAPI_THRESHOLD_WARNING] threshold for issue of warning i syslog in ms (int)
+                [LIGHTOBSAPI_THRESHOLD_ERROR] threshold for issue of error in syslog in  ms  (int)
+                [CLIMATEOBSAPI_THRESHOLD_WARNING] threshold for issue of warning i syslog in ms (int)
+                [CLIMATEOBSAPI_THRESHOLD_ERROR] threshold for issue of error in syslog in  ms  (int)
+                [SILENT] 0|1  (0=slient, 1=console output))
+                (*) Remark: [PARAMETER] and value must be separated by a white space
+                Bemærk: Der skal være et blanktegn mellem parameternavn og værdi.
 
 Filformater:
 	Transaktionslog:
@@ -114,7 +120,7 @@ Filformater:
         Format: [Dato/tid], [API_id], [http_returkode], [Transaktionskode], [Svartid]
 	hvor: 
 		[Dato tid] er det tidspunkt programmet skriver linjen i loggen - GMT
-		[API_id] er [0|1|2] hvor 0=metObs, 1=oceanObs, 2=lightObs
+		[API_id] er [0|1|2|3] hvor 0=metObs, 1=oceanObs, 2=lightObs, 3=climateObs
 		[http_returkode] er den returkode gateway'ens webserver har givet (eks:200=ok)
 		[Transaktionskode] er Gravitee-io transaktionskoden fra API'et
 		[Svartid] er i millisek. set fra klienten.
@@ -129,7 +135,7 @@ Filformater:
 	hvor:
 		[Dato/tid] er det tidspunkt programmet skiver linjen i loggen - GMT
                 [Stat_kode] er “m”|”o”|”l”<“10”|”100”|”1000”>, hvor
-			1.  ciffer er API_id, hvor “m”=metObs,”o”=oceanObs,”l”=lightObs
+			1.  ciffer er API_id, hvor “m”=metObs,”o”=oceanObs,”l”=lightObs,"c"=climateObs
 			2-“n” ciffer er “10”|”100”|”1000” - måling efter hhv. 10,100,1000 transaktioner
 		
 		[Gns. svartid] er den gennemsnitlige svartid i millisekunder for de seneste 10, 100 eller 1000 transaktioner
@@ -140,11 +146,10 @@ Filformater:
 	
 	
 	Overvågningslog:
-        Overvågningsloggen bruges
- til overvågning af performance. For hver 10 transaktion beregnes den gennemsnitlige svartid.
-        Hvis denne svartid er mindre end [TREASHOLD_WARNING] skrives en linje i loggen af typen NOTICE.
-        Hvis svartiden er større end [TREASHOLD_WARNING] men mindre end [TREASHOLD_ERROR] skrives en linje af type WARNING.
-        Hvis svartiden er større end [TREASHOLD_ERROR] skrives en linje af typen ERROR.
+        Overvågningsloggen bruges til overvågning af performance. For hver 10 transaktion beregnes den gennemsnitlige svartid.
+        Hvis denne svartid er mindre end [[API]TREASHOLD_WARNING] skrives en linje i loggen af typen NOTICE.
+        Hvis svartiden er større end [[API]TREASHOLD_WARNING] men mindre end [TREASHOLD_ERROR] skrives en linje af type WARNING.
+        Hvis svartiden er større end [[API]TREASHOLD_ERROR] skrives en linje af typen ERROR.
 
 	Der skrives en linje for hver 10 afsendt til de tre API'er.
         Der skrives parallelt i operativsystemets syslog og i en selvstændig logfil. Log-records der sendes i syslog, kan hentes ud af samme
@@ -157,5 +162,5 @@ Filformater:
                 [Message] “DMIAPI”[SERVERITY_CODE]: “NOTICE|WARNING|ERROR” [API_ID] “avg10=“ [Gns.10 svartid]
                 Hvor:
                      [SEVERITY_CODE] er “1”=NOTICE, “2”=WARNING eller “3”=ERROR
-                     [API_ID] = “metObs”|”oceanObs”|”lightObs”
+                     [API_ID] = “metObs”|”oceanObs”|”lightObs”|"climateObs"
                      [Gns.10 svartid] er gennemsnittet af de ti seneste målinger i millisekunder
