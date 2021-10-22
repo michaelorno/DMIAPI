@@ -1,5 +1,5 @@
 # DMIAPI
-dmiapi dokumentation
+dmiapi.c dokumentation
 Version 1.00 22.10.2021
 
 Navn:
